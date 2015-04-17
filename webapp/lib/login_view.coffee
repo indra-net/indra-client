@@ -12,7 +12,7 @@ loginTemplate = ->
 		''')()
 
 
-exports.setup = () ->
+setup = ->
 
 	# render the login template in html body
 	$('body').html(loginTemplate())
