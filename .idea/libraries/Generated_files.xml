@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Generated files" type="javaScript">
+    <properties>
+      <sourceFilesUrls>
+        <item url="file://$PROJECT_DIR$/webapp/lib/login_view.js" />
+      </sourceFilesUrls>
+    </properties>
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/webapp/lib/login_view.js" />
+    </CLASSES>
+    <SOURCES />
+  </library>
+</component>

@@ -1,0 +1,8 @@
+data/
+venv/
+node_modules/
+.sass-cache
+*.swp
+*.pyc
+.DS_Store
+todo
