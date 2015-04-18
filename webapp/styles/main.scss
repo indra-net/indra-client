@@ -1,8 +1,97 @@
-$blackish: rgb(12,12,12);
-$grayish: rgb(200,200,200);
+
+$background: rgb(38,41,44);
+$text: rgb(244,244,244);
+
+$red: #F23C6F;
+$yellow: #EFFCA2;
+$green: rgb(97,199,145);
 
 body {
-	background-color: $blackish;
-	color:$grayish;
+	background-color: $background;
+	// text
+	color:$text;
 	font-size:22pt;
+	font-family: Helvetica Neue, sans;
+}
+
+#contentContainer {
+	position: fixed;
+	// top+bottom margin 
+	margin:20vh 0 33vh 0;
+	width:100%;
+}
+
+#content, #header {
+	margin: 0 auto;
+}
+
+#content {
+	max-width:400px;
+}
+
+#header {
+	width:80%;
+	max-width:700px;
+	min-width:400px;
+	height:40px;
+}
+
+//
+// header
+//
+#header {
+
+	font-size: 8pt;
+
+	#clock, #userId {
+		float:right;
+		display:block;
+		padding-left:15px;
+	}
+
+}
+
+//
+// status container
+//
+#statusContainer {
+
+	font-style:italic;
+	font-size:10pt;
+
+	#statusCircle {
+
+		@mixin spinner {
+			background-image: url("assets/spinner.gif");
+			background-repeat: no-repeat;
+			background-position: 50%;
+			background-size: 100px 100px;
+		}
+
+		// circle
+		width:200px;
+		height:200px;	
+		border-radius: 50%;
+		margin-bottom: 40px;
+
+		&.notPaired {
+			background:$red;
+		}
+
+		&.pairing {
+			background:$red;
+			@include spinner;
+		}
+
+		&.paired {
+			background:$green;
+		}
+
+		&.poorSignalQuality {
+			background:$yellow;
+			@include spinner;
+		}
+
+
+	}
 }

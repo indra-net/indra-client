@@ -11,14 +11,12 @@ loginTemplate = ->
 		<button id="connectButton">Connect!</button>
 		''')()
 
-
 setup = ->
 
 	# render the login template in html body
-	$('body').html(loginTemplate())
+	$('#content').html(loginTemplate())
 
 	$userIdInput = $('#userIdInput')
-	$electrodePositionSelection = $('#electrodePosition')
 	$connectButton = $('#connectButton')
 
 	userIdInputProperty = bacon$.textFieldValue($userIdInput)

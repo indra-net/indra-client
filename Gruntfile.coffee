@@ -7,6 +7,8 @@ module.exports = (grunt) ->
 		# except index.html, which goes in server/templates/
 		coffeeify: 
 			compile: 
+				options:
+					debug: true
 				files: [
 					src: ['webapp/lib/*.coffee', 'webapp/main.coffee'],
 					dest: 'server/static/bundle.js'

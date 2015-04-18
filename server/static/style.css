@@ -1,6 +1,56 @@
 body {
-  background-color: #0c0c0c;
-  color: #c8c8c8;
-  font-size: 22pt; }
+  background-color: #26292c;
+  color: #f4f4f4;
+  font-size: 22pt;
+  font-family: Helvetica Neue, sans; }
+
+#contentContainer {
+  position: fixed;
+  margin: 20vh 0 33vh 0;
+  width: 100%; }
+
+#content, #header {
+  margin: 0 auto; }
+
+#content {
+  max-width: 400px; }
+
+#header {
+  width: 80%;
+  max-width: 700px;
+  min-width: 400px;
+  height: 40px; }
+
+#header {
+  font-size: 8pt; }
+  #header #clock, #header #userId {
+    float: right;
+    display: block;
+    padding-left: 15px; }
+
+#statusContainer {
+  font-style: italic;
+  font-size: 10pt; }
+  #statusContainer #statusCircle {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    margin-bottom: 40px; }
+    #statusContainer #statusCircle.notPaired {
+      background: #F23C6F; }
+    #statusContainer #statusCircle.pairing {
+      background: #F23C6F;
+      background-image: url("assets/spinner.gif");
+      background-repeat: no-repeat;
+      background-position: 50%;
+      background-size: 100px 100px; }
+    #statusContainer #statusCircle.paired {
+      background: #61c791; }
+    #statusContainer #statusCircle.poorSignalQuality {
+      background: #EFFCA2;
+      background-image: url("assets/spinner.gif");
+      background-repeat: no-repeat;
+      background-position: 50%;
+      background-size: 100px 100px; }
 
 /*# sourceMappingURL=style.css.map */

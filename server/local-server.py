@@ -34,14 +34,15 @@ def hello():
 '''
 		socket communication with browser
 '''
-@socketio.on('connect')
+@socketio.on('pair')
 def connect_to_mwm(message):
 	print 'user wants to connect to the mindwave!', message
 	# print 'connecting it...'
 	stop_mw_client_thread()
 	emit('server_says', {'msg':'i stopped your mindwave!'})
 	create_and_start_mw_client_thread()
-	emit('server_says', {'msg':'i started the thread that should connect your mindwave!!'})
+	# send a 'connecting' event to the client to show we're trying to connect
+	emit('pairing', {'msg':'i started the thread that should connect your mindwave!!'})
 	# emit('server_says', {'msg':'i started the thread that connects to your mindwave!'})
 
 @socketio.on('record')

@@ -34,7 +34,7 @@ class Client(threading.Thread):
         self._stop = threading.Event()
 
         self.server_url = server_url 
-        self.buffer_size = 256 # twice per second
+        self.buffer_size = 512 # once per second
         self.raw_log = []
         self.attention_esense= None
         self.meditation_esense= None 
@@ -83,8 +83,6 @@ class Client(threading.Thread):
 
         # parse packets every time one comes in
         for pkt in ThinkGearProtocol(self.port).get_packets():
-
-            # while not self.stoprequest.isSet():
 
             for d in pkt:
 
