@@ -87,7 +87,6 @@ init = ->
 	indraTimeProperty
 		.onValue(clockView.setup)
 
-
 	#
 	# 'login'/join interface
 	#
