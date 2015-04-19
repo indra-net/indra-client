@@ -6,8 +6,12 @@ body {
 
 #contentContainer {
   position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
   margin: 20vh 0 33vh 0;
-  width: 100%; }
+  padding: 5vh 0 5vh 0;
+  background-color: #c8c8c8; }
 
 #content, #header {
   margin: 0 auto; }
@@ -23,7 +27,7 @@ body {
 
 #header {
   font-size: 8pt; }
-  #header #clock, #header #userId {
+  #header #clock, #header #userId, #header #postCounter {
     float: right;
     display: block;
     padding-left: 15px; }
@@ -35,7 +39,7 @@ body {
     width: 200px;
     height: 200px;
     border-radius: 50%;
-    margin-bottom: 40px; }
+    margin: 10px 0 30px 50px; }
     #statusContainer #statusCircle.notPaired {
       background: #F23C6F; }
     #statusContainer #statusCircle.pairing {

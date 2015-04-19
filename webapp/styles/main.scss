@@ -1,5 +1,6 @@
 
-$background: rgb(38,41,44);
+$backgroundBack: rgb(38,41,44);
+$backgroundFront: rgb(200,200,200);
 $text: rgb(244,244,244);
 
 $red: #F23C6F;
@@ -7,7 +8,7 @@ $yellow: #EFFCA2;
 $green: rgb(97,199,145);
 
 body {
-	background-color: $background;
+	background-color: $backgroundBack;
 	// text
 	color:$text;
 	font-size:22pt;
@@ -16,9 +17,13 @@ body {
 
 #contentContainer {
 	position: fixed;
+	left:0;
+	top:0;
+	width:100%;
 	// top+bottom margin 
 	margin:20vh 0 33vh 0;
-	width:100%;
+	padding:5vh 0 5vh 0;
+	background-color:$backgroundFront;
 }
 
 #content, #header {
@@ -43,7 +48,7 @@ body {
 
 	font-size: 8pt;
 
-	#clock, #userId {
+	#clock, #userId, #postCounter {
 		float:right;
 		display:block;
 		padding-left:15px;
@@ -72,7 +77,7 @@ body {
 		width:200px;
 		height:200px;	
 		border-radius: 50%;
-		margin-bottom: 40px;
+		margin: 10px 0 30px 50px;
 
 		&.notPaired {
 			background:$red;
