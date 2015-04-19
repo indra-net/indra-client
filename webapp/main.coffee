@@ -14,6 +14,8 @@ config =
 	## time
 	updateTimeInterval: 3000 # how often we want to check our time against server time
 	pollLocalClockInterval: 300 # how often we poll our local clock
+	tryToPairInterval: 20000 # ms to wait before we try to pair again
+	signalFreshnessThreshold: 3 # seconds to wait, after receiving our last reading, before we decide that our mindwave signal has gone stale
 
 
 sockets = require './lib/sockets.coffee'
@@ -34,27 +36,16 @@ setupUserIdView = (id, $idDiv) ->
 	$idDiv.html(id)
 
 incrementPostCounter = (currentPostCount) ->
-	console.log('incrementing')
 	postCount = currentPostCount+1
 	$('#postCounter').html(postCount)
 	postCount
 
 
-
 # starts pairing with device
 # shows the main, status interface
-logInToLocalServer = (localServerSocket, id, mindwaveStatusProperty) ->
-
-	# request that the local server pair with the device
-	localServerSocket.emit('pair', id)
-
+setId = (id) ->
 	# set user ID (model+view)
 	setupUserIdView(id, $('#userId'))
-
-	# display the status screen
-	# we pass it a Bacon Bus (pairAgain..)
-	# pushing to this will pair us with mindwave again
-	statusView.setup(mindwaveStatusProperty)
 
 init = ->
 
@@ -72,7 +63,7 @@ init = ->
 	localServerMessages = Bacon.fromEventTarget(localServerSocket, 'pairing')
 
 	# make a property representing the current status of the local MWM server
-	mindwaveStatusProperty = getMindwaveStatusProperty(mindwaveDataStream, localServerMessages)
+	mindwaveStatusProperty = getMindwaveStatusProperty(mindwaveDataStream, localServerMessages, config.signalFreshnessThreshold)
 		# (skip duplicate statuses)
 		.skipDuplicates()
 	mindwaveStatusProperty.log('mindwave status: ')
@@ -98,26 +89,60 @@ init = ->
 		.onValue(clockView.setup)
 
 
+
 	#
 	# 'login'/join interface
 	#
 
-	loginAndPairFn = (userId) -> 
-		console.log 'starting pairing routine!', userId
-		logInToLocalServer(
-			localServerSocket
-			, userId
-			, mindwaveStatusProperty)
+	# display the status screen
+	$statusDiv = $('#statusDiv')
+	statusView.setup(mindwaveStatusProperty, $statusDiv)
+	# but hide it for now
+	$statusDiv.hide()
 
 	# initialially, the view is the login view
-	idSubmissionStream = login_view.setup()
+	$loginDiv = $('#loginDiv')
+	idSubmissionStream = login_view.setup($loginDiv)
+
 	# on submit button click, 
 	idSubmissionStream
+		# set the user's id
+		# and show the mw status screen
 		.onValue((id) -> 
-			loginAndPairFn(id))
+			setId(id)
+			$loginDiv.hide()
+			$statusDiv.show())
+
 
 	# property represetning the user's id choice
 	userIdProp = idSubmissionStream.toProperty(null)
+
+
+
+	#
+	# sending 'pair' messages to mwm
+	#
+
+	pairRequests = new Bacon.Bus()
+
+	pairRequests.onValue((v)->
+		console.log('pairing to device now')
+		# request that the local server pair with the device
+		localServerSocket.emit('pair'))
+
+	# whenever we get a 'not paired' status
+	mindwaveStatusProperty.filter((v)->isValue(v,'notPaired'))
+		.onValue(()-> 
+			# send a pair request
+			pairRequests.push(1)
+			# and send a pair request every tryToPairInterval
+			# , until we get a good signal
+			Bacon.interval(config.tryToPairInterval)
+				.takeWhile(
+					# take while status == 'pairing'
+					mindwaveStatusProperty.map((v) -> isValue(v,'pairing')))
+				# if we're still 'pairing' by now, re-emit pair request
+				.onValue(()->pairRequests.push(1)))
 
 
 

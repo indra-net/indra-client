@@ -10,8 +10,8 @@ setClass = ($element, cssClass) ->
 	$element.removeClass()
 	$element.addClass(cssClass)
 
-notPairedMessage = 'No connection with your Neurosky right now. About to connect... '
-pairingMessage = 'No connection with your Neurosky right now. Pairing with device.....'
+notPairedMessage = 'No connection with your Neurosky right now. About to pair... '
+pairingMessage = 'Pairing with NeuroSky headset.....'
 pairedMessage = "<b>Everything is ok</b>"
 poorSignalQualityMessage = "<b>We're getting a suboptimal signal from your device.</b> Try adjusting it on your head until this message goes away."
 
@@ -29,10 +29,10 @@ setStatus = (cssClass, message) ->
 	$('#statusMessage').html(message)
 
 
-setup = (statusProperty, pairAgainRequestStream) ->
+setup = (statusProperty, $div) ->
 
 	# set up the page
-	$('#content').html(statusPageTemplate())
+	$div.html(statusPageTemplate())
 
 	#  statusProperty sets the Status UI
 	#

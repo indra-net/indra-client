@@ -11,10 +11,10 @@ loginTemplate = ->
 		<button id="connectButton">Connect!</button>
 		''')()
 
-setup = ->
+setup = ($div) ->
 
 	# render the login template in html body
-	$('#content').html(loginTemplate())
+	$div.html(loginTemplate())
 
 	$userIdInput = $('#userIdInput')
 	$connectButton = $('#connectButton')

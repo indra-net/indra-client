@@ -8,13 +8,13 @@ isSignalGood = (data) -> if data['signal_quality'] == 0 then true else false
 
 differenceInSeconds = (earlier, later) -> moment(later).diff(earlier, 's')
 
-# reading is 'stale' if we haven't gotten a reading in more than 5s
-isSignalFresh = (reading_time, now) -> 
+# reading is 'stale' if we haven't gotten a reading in more than 3s
+isSignalFresh = (reading_time, now, threshold) -> 
 	reading_time = new Date(reading_time)
 	# to be timezone-safe, lets set the day+hour of whatehver reading we get to our day+hour
 	reading_time.setDate(now.getDate())
 	reading_time.setHours(now.getHours())
-	differenceInSeconds(reading_time, now) < 5 
+	differenceInSeconds(reading_time, now) < threshold 
 
 
 # takes a socket , returns a status stream
@@ -24,7 +24,7 @@ isSignalFresh = (reading_time, now) ->
 #	paired
 #	poorSignalQuality
 
-getMindwaveStatusProperty = (mindwaveDataStream, localServerMessages) -> 
+getMindwaveStatusProperty = (mindwaveDataStream, localServerMessages, signalFreshnessThreshold) -> 
 
 	# mindwave data at any given time
 	mindwaveDataProp = mindwaveDataStream.toProperty(false)
@@ -40,9 +40,11 @@ getMindwaveStatusProperty = (mindwaveDataStream, localServerMessages) ->
 		.map((v) -> 
 			isSignalFresh(
 				v.reading_time
-				, new Date()))
+				, new Date()
+				, signalFreshnessThreshold))
 
 	signalIsStaleStream = isSignalFreshStream
+		.skipDuplicates()
 		.filter(isFalsy)
 		.map('notPaired')
 	# TODO throttle this one so we don't drive the user crazy when theres a spotty connection?
