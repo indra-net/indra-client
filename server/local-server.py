@@ -5,10 +5,12 @@ import lib.mindwave_client as mindwave_client
 import json
 import time
 import traceback
+import logging
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
+
 
 ''' 
 		deliver the webapp to the browser
@@ -123,5 +125,6 @@ if __name__ == "__main__":
 	global recorder_electrode_pos
 	global recorder_gesture
 
+	print 'indra-client is running! point your browser toward http://localhost:5000'
 	socketio.run(app)
 	# app.run(port=4228,debug=True)

@@ -1,6 +1,10 @@
 $ = require 'jquery'
 
 postJson = (data, url, successCb) ->
+	
+	# debug
+	console.log 'here is a data i want to post', JSON.stringify(data) #debug
+
 	$.ajax({
 		type: 'POST'
 		url: url

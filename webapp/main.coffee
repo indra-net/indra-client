@@ -10,7 +10,7 @@ config =
 	## network
 	localServerUrl: 'http://localhost:5000'
 	timeServerUrl: 'http://indra.webfactional.com/'
-	dataCollectionServerUrl: 'http://indra.webfactional.com/collect/'
+	dataCollectionServerUrl: 'http://indra.webfactional.com/collector/'
 	## time
 	updateTimeInterval: 3000 # how often we want to check our time against server time
 	pollLocalClockInterval: 300 # how often we poll our local clock
@@ -23,7 +23,7 @@ login_view = require './lib/login_view.coffee'
 statusView = require './lib/status_view.coffee'
 clockView = require './lib/clock_view.coffee'
 getMindwaveStatusProperty = require './lib/getMindwaveStatusProperty.coffee'
-getIndraTimeProperty = require './lib/getIndraTimeProperty.coffee'
+syncedTime = require './lib/syncedTime.coffee'
 postJson = require './lib/postJson.coffee'
 
 
@@ -35,11 +35,6 @@ setupUserIdView = (id, $idDiv) ->
 	# store the user ID in a backbone model
 	$idDiv.html(id)
 
-incrementPostCounter = (currentPostCount) ->
-	postCount = currentPostCount+1
-	$('#postCounter').html(postCount)
-	postCount
-
 
 # starts pairing with device
 # shows the main, status interface
@@ -48,7 +43,6 @@ setId = (id) ->
 	setupUserIdView(id, $('#userId'))
 
 init = ->
-
 
 	#
 	# local mwm device communications
@@ -66,7 +60,9 @@ init = ->
 	mindwaveStatusProperty = getMindwaveStatusProperty(mindwaveDataStream, localServerMessages, config.signalFreshnessThreshold)
 		# (skip duplicate statuses)
 		.skipDuplicates()
-	mindwaveStatusProperty.log('mindwave status: ')
+
+	# debug
+	mindwaveStatusProperty.log('mindwave status: ') 
 
 	
 
@@ -77,17 +73,19 @@ init = ->
 	# this (moment.js) property updates on pollClockInterval
 	# before we hear anything from the server, it is `null`
 	# (before we've synced with indra, this value is null)
-	indraTimeProperty = getIndraTimeProperty(
+	timeDiffStream = syncedTime.getTimeDiffStream(
 		config.timeServerUrl
-		, config.updateTimeInterval
-		, config.pollLocalClockInterval)
+		, config.updateTimeInterval)
 		# ignore null values
 		.filter(isTruthy)
+
+	indraTimeProperty = syncedTime.getSynchronisedTimeProperty(
+		timeDiffStream
+		, config.pollLocalClockInterval)
 
 	# update the clock
 	indraTimeProperty
 		.onValue(clockView.setup)
-
 
 
 	#
@@ -113,7 +111,6 @@ init = ->
 			$loginDiv.hide()
 			$statusDiv.show())
 
-
 	# property represetning the user's id choice
 	userIdProp = idSubmissionStream.toProperty(null)
 
@@ -126,6 +123,7 @@ init = ->
 	pairRequests = new Bacon.Bus()
 
 	pairRequests.onValue((v)->
+		# debug
 		console.log('pairing to device now')
 		# request that the local server pair with the device
 		localServerSocket.emit('pair'))
@@ -154,8 +152,17 @@ init = ->
 
 	dataToPost = Bacon.combineTemplate({
  		id: userIdProp
+ 		# our best guess at the server's time
+ 		indra_time: indraTimeProperty
+ 		# the last observed latency (difference between our clock and indra)
+ 		browser_latency: timeDiffStream
+ 		# the mindwave data
  		reading: mindwaveDataStream })
 
+	# post the data whenever there's a mindave data event
+	#
+	# NB: we post things without checking if time, user ID, or reading are ok
+	# if time is null, user id is null, they can figure that out later! log everything!
 	dataToPost
 		.sampledBy(mindwaveDataStream)
 		.onValue((data) -> 
@@ -166,8 +173,9 @@ init = ->
 				# success cb
 				, ()->console.log 'posted ok')
 			# update our counter of post requests made
-			# side effect: update counter view
-			postCount = incrementPostCounter(postCount))
+			# + update counter view
+			postCount = postCount+1
+			$('#postCounter').html(postCount))
 
 
 # launch the app

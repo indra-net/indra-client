@@ -7,10 +7,7 @@ moment = require 'moment'
 timediff = (one, the_other) -> moment(the_other).diff(one)
 getServerTime = (timeDiff) -> moment().utc().add(timeDiff)
 
-getIndraTimeProperty = (timeServerURL, updateTimeInterval, pollLocalClockInterval) ->
-
-	# a timediff var that mutates everytime we fetch time from the timeserver
-	timeDiffStream = new Bacon.Bus()
+getTimeDiffStream = (timeServerURL, updateTimeInterval) ->
 
 	# ask for the time on an interval
 	timeRequests = Bacon.interval(updateTimeInterval)
@@ -18,16 +15,22 @@ getIndraTimeProperty = (timeServerURL, updateTimeInterval, pollLocalClockInterva
 
 	serverTimeResults = timeRequests.ajax()
 
+	timeDiffStream = serverTimeResults
+		.map((t) -> timediff(moment(t), moment()))
+
+	timeDiffStream
+
+getSynchronisedTimeProperty = (timeDiffStream, pollLocalClockInterval) ->
+	# mutable value we use to calculate indra time
 	timeDiff = null
 	# on each response from the timeserver
 	# set the diff between the servers time and ours
-	serverTimeResults
-		.onValue((t)-> 
-			timeDiff = timediff(moment(t), moment()))
+	timeDiffStream
+		.onValue((t)-> timeDiff = t)
 
  	# asnyc polling to get local time
  	# we only get a timediff when we've heard from the server
-	indraTimeProperty = Bacon.fromPoll(
+	synchronisedTimeProperty = Bacon.fromPoll(
 		pollLocalClockInterval, () -> 
 			if timeDiff
 				return getServerTime(timeDiff)
@@ -35,6 +38,8 @@ getIndraTimeProperty = (timeServerURL, updateTimeInterval, pollLocalClockInterva
 				return null)
 		.toProperty()
 
-	indraTimeProperty
+	synchronisedTimeProperty
+		.filter((v) -> if v then v)
 
-module.exports = getIndraTimeProperty
+exports.getTimeDiffStream = getTimeDiffStream
+exports.getSynchronisedTimeProperty = getSynchronisedTimeProperty 
