@@ -1,16 +1,14 @@
 $ = require 'jquery'
 Bacon = require 'baconjs'
 
-##
-##    YOU HAVE TO `RY` BEFORE YOU CAN `DRY`
-##
-#
-# --- config
 config = 
+
 	## network
-	localServerUrl: 'http://localhost:5000'
-	timeServerUrl: 'http://indra.webfactional.com/'
+	localSocketServerUrl: 'http://localhost:5000'
+	timeServerUrl: 'http://indra.webfactional.com/timeserver'
 	dataCollectionServerUrl: 'http://indra.webfactional.com/collector/'
+	# adminStatusServerURL: 'http://indra.webfactional.com/status'
+
 	## time
 	updateTimeInterval: 3000 # how often we want to check our time against server time
 	pollLocalClockInterval: 300 # how often we poll our local clock
@@ -18,7 +16,7 @@ config =
 	signalFreshnessThreshold: 3 # seconds to wait, after receiving our last reading, before we decide that our mindwave signal has gone stale
 
 
-sockets = require './lib/sockets.coffee'
+localSocketServer = require './lib/localSocketServer.coffee'
 login_view = require './lib/login_view.coffee'
 statusView = require './lib/status_view.coffee'
 clockView = require './lib/clock_view.coffee'
@@ -30,6 +28,8 @@ postJson = require './lib/postJson.coffee'
 isValue = (v, value) -> if v == value then true else false
 isTruthy = (item) -> if item then true else false
 isFalsy = (item) -> if !item then true else false
+count = (acc, curr) -> acc + 1
+
 
 setupUserIdView = (id, $idDiv) ->
 	# store the user ID in a backbone model
@@ -49,20 +49,19 @@ init = ->
 	#
 
 	# socket with the local python server
-	localServerSocket = sockets.setup(config.localServerUrl)
+	localServerSocket = localSocketServer.setup(config.localSocketServerUrl)
 	# dataStream is a Bacon stream of mindwave data
 	# we get the data over a websocket connction to the server.
 	mindwaveDataStream = Bacon.fromEventTarget(localServerSocket, 'data')
 	# a stream of the local server's attempts to pair with the mindwave
 	localServerMessages = Bacon.fromEventTarget(localServerSocket, 'pairing')
-
 	# make a property representing the current status of the local MWM server
 	mindwaveStatusProperty = getMindwaveStatusProperty(mindwaveDataStream, localServerMessages, config.signalFreshnessThreshold)
 		# (skip duplicate statuses)
 		.skipDuplicates()
 
 	# debug
-	mindwaveStatusProperty.log('mindwave status: ') 
+	# mindwaveStatusProperty.log('mindwave status: ') 
 
 	
 
@@ -70,15 +69,16 @@ init = ->
 	# synchronised 'indra time'
 	#
 
-	# this (moment.js) property updates on pollClockInterval
-	# before we hear anything from the server, it is `null`
-	# (before we've synced with indra, this value is null)
+	# a stream of time differences 
+	# TODO: sank.getTimeDiffStream
 	timeDiffStream = syncedTime.getTimeDiffStream(
 		config.timeServerUrl
 		, config.updateTimeInterval)
-		# ignore null values
+		# (before we've synced with indra, this value is null)
 		.filter(isTruthy)
 
+	# this (moment.js) property updates on pollClockInterval
+	# TODO: sank.getSynchronisedTime
 	indraTimeProperty = syncedTime.getSynchronisedTimeProperty(
 		timeDiffStream
 		, config.pollLocalClockInterval)
@@ -111,7 +111,8 @@ init = ->
 			$statusDiv.show())
 
 	# property represetning the user's id choice
-	userIdProp = idSubmissionStream.toProperty(null)
+	userIdProp = idSubmissionStream.toProperty('unnamed')
+	userIdProp.onValue((v) -> id = v)
 
 
 
@@ -147,8 +148,6 @@ init = ->
 	# posting mwm data to collection server
 	#
 
-	postCount = 0
-
 	dataToPost = Bacon.combineTemplate({
  		id: userIdProp
  		# our best guess at the server's time
@@ -163,19 +162,59 @@ init = ->
 	# NB: we post things without checking if time, user ID, or reading are ok
 	# if time is null, user id is null, they can figure that out later! log everything!
 	dataToPost
-		.sampledBy(mindwaveDataStream)
+		.sampledBy(mindwaveDataStream.filter(isTruthy))
 		.onValue((data) -> 
 			# post json to to server
 			postJson(
 				data
 				, config.dataCollectionServerUrl
 				# success cb
-				, ()->console.log 'posted ok')
-			# update our counter of post requests made
-			# + update counter view
-			postCount = postCount+1
-			$('#postCounter').html(postCount))
+				, ()->console.log 'posted ok' ))
 
+	# update our counter of post requests made
+	postCount = dataToPost
+		.sampledBy(mindwaveDataStream.filter(isTruthy))
+		.scan(0, count)
+	# + update counter view
+	postCount.onValue((count) -> $('#postCounter').html(count))
+
+
+
+	# #
+	# #  connecting to admin server
+	# #
+
+	# # compile status reports for the admin server
+	# statusReport = Bacon.combineTemplate({
+	# 	id: userIdProp 
+	# 	deviceStatus: mindwaveStatusProperty 
+	# 	numPosts: postCount })
+
+	# # when a new status comes in 
+	# statusReport
+	# 	.throttle(5000)
+	# 	# send our status report to the server
+	# 	.onValue((report) ->
+	# 		if report.id != 'unnamed'
+	# 			postJson(
+	# 				report
+	# 				, config.adminStatusServerURL
+	# 				# success cb
+	# 				, ()->console.log 'posted ok'))
+
+
+
+	#
+	# teardown
+	#
+	# watch out for the sneaky user trying to close the window and leave our app ever
+	window.onbeforeunload = (e) ->
+		e = e || window.event
+		# for IE / Firefox prior to version 4
+		if (e)
+		    e.returnValue = 'Sure?'
+		# for Safari
+		return 'Sure?'
 
 # launch the app
 $(document).ready(() ->

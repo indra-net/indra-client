@@ -1,6 +1,4 @@
 io = require './socket.io.min.js'
-Bacon = require 'baconjs'
-
 
 # returns a bacon stream of the data
 exports.setup = (localServer) ->
