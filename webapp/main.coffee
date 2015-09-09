@@ -6,7 +6,7 @@ config =
 	## network
 	localSocketServerUrl: 'http://localhost:5000'
 	timeServerUrl: 'http://indra.webfactional.com/timeserver'
-	dataCollectionServerUrl: 'http://indra.webfactional.com/collector/'
+	dataCollectionServerUrl: 'http://indra.webfactional.com/'
 	# adminStatusServerURL: 'http://indra.webfactional.com/status'
 
 	## time
@@ -143,13 +143,13 @@ init = ->
 				.onValue(()->pairRequests.push(1)))
 
 
-
 	#
 	# posting mwm data to collection server
 	#
 
 	dataToPost = Bacon.combineTemplate({
- 		id: userIdProp
+ 		user_id: userIdProp
+ 		type: "mindwave"
  		# our best guess at the server's time
  		indra_time: indraTimeProperty
  		# the last observed latency (difference between our clock and indra)
@@ -157,14 +157,15 @@ init = ->
  		# the mindwave data
  		reading: mindwaveDataStream })
 
-	# post the data whenever there's a mindave data event
-	#
-	# NB: we post things without checking if time, user ID, or reading are ok
-	# if time is null, user id is null, they can figure that out later! log everything!
+	#post the data whenever there's a mindave data event
+	
+	#NB: we post things without checking if time, user ID, or reading are ok
+	#if time is null, user id is null, they can figure that out later! log everything!
 	dataToPost
 		.sampledBy(mindwaveDataStream.filter(isTruthy))
 		.onValue((data) -> 
 			# post json to to server
+			console.log 'posting', data
 			postJson(
 				data
 				, config.dataCollectionServerUrl
@@ -177,31 +178,6 @@ init = ->
 		.scan(0, count)
 	# + update counter view
 	postCount.onValue((count) -> $('#postCounter').html(count))
-
-
-
-	# #
-	# #  connecting to admin server
-	# #
-
-	# # compile status reports for the admin server
-	# statusReport = Bacon.combineTemplate({
-	# 	id: userIdProp 
-	# 	deviceStatus: mindwaveStatusProperty 
-	# 	numPosts: postCount })
-
-	# # when a new status comes in 
-	# statusReport
-	# 	.throttle(5000)
-	# 	# send our status report to the server
-	# 	.onValue((report) ->
-	# 		if report.id != 'unnamed'
-	# 			postJson(
-	# 				report
-	# 				, config.adminStatusServerURL
-	# 				# success cb
-	# 				, ()->console.log 'posted ok'))
-
 
 
 	#
