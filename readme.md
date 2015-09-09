@@ -9,7 +9,9 @@
 
 ## Developing
 
-first ```npm install``` the webapp requirements, then ```grunt``` to build the webapp. for dev, you can ```grunt-watch``` to re-build the webapp on filechange.
+first `npm install` the webapp requirements, then `grunt` to build the webapp. for dev, you can `grunt-watch` to re-build the webapp on filechange.
+
+I recommend using python virtualenv to manage the python depenencies.
 
 ## Details 
 
