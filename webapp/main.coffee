@@ -7,7 +7,7 @@ config =
 	localSocketServerUrl: 'http://localhost:5000'
 	timeServerUrl: 'http://indra.webfactional.com/timeserver'
 	dataCollectionServerUrl: 'http://indra.webfactional.com/'
-	# adminStatusServerURL: 'http://indra.webfactional.com/status'
+	eventTypeString: 'mindwave'
 
 	## time
 	updateTimeInterval: 3000 # how often we want to check our time against server time
@@ -137,7 +137,6 @@ init = ->
 			# , until we get a good signal
 			Bacon.interval(config.tryToPairInterval)
 				.takeWhile(
-					# take while status == 'pairing'
 					mindwaveStatusProperty.map((v) -> isValue(v,'pairing')))
 				# if we're still 'pairing' by now, re-emit pair request
 				.onValue(()->pairRequests.push(1)))
@@ -149,7 +148,7 @@ init = ->
 
 	dataToPost = Bacon.combineTemplate({
  		user_id: userIdProp
- 		type: "mindwave"
+ 		type: eventTypeString
  		# our best guess at the server's time
  		indra_time: indraTimeProperty
  		# the last observed latency (difference between our clock and indra)
