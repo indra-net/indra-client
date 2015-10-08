@@ -7,7 +7,6 @@ config =
 	localSocketServerUrl: 'http://localhost:5000'
 	timeServerUrl: 'http://indra.webfactional.com/timeserver'
 	dataCollectionServerUrl: 'http://indra.webfactional.com/'
-	eventTypeString: 'mindwave'
 
 	## time
 	updateTimeInterval: 3000 # how often we want to check our time against server time
@@ -148,7 +147,7 @@ init = ->
 
 	dataToPost = Bacon.combineTemplate({
  		user_id: userIdProp
- 		type: eventTypeString
+ 		type: 'mindwave'
  		# our best guess at the server's time
  		indra_time: indraTimeProperty
  		# the last observed latency (difference between our clock and indra)
@@ -170,6 +169,10 @@ init = ->
 				, config.dataCollectionServerUrl
 				# success cb
 				, ()->console.log 'posted ok' ))
+
+	dataToPost
+		.sampledBy(mindwaveDataStream.filter(isTruthy))
+		.log('posting...')
 
 	# update our counter of post requests made
 	postCount = dataToPost
